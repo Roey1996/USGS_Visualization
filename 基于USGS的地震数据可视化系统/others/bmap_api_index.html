@@ -1,0 +1,117 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Data visualization_PointMap</title>
+    <link href="../css/bmap_index.css" type="text/css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../css/bootstrap-theme.min.css">
+    <link rel="stylesheet" href="../css/fontAwesome.css">
+    <link rel="stylesheet" href="../css/hero-slider.css">
+    <link rel="stylesheet" href="../css/tooplate-style.css">
+</head>
+<body>
+<ul class="nav nav-tabs">
+    <li><a href="../GIS_index.html" data-toggle=tab">主页</a></li>
+    <li><a href="Heatdat_bmap.html" data-toggle=tab">热力图</a></li>
+    <li><a href="Two_bmap.html" data-toggle=tab">双地图比较</a></li>
+    <li><a href="help.html">获取帮助</a></li>
+    <li><a>经度: <input id="longitude" type="text" style="width:100px; margin-right:10px;" /></a></li>
+    <li><a>纬度: <input id="latitude" type="text" style="width:100px; margin-right:10px;" /></a></li>
+    <li><a><input type="button" value="添加标记" onclick="theLocation()" /></a></li>
+    <li style="float: right "><a><input id="countrySearch" type="button" value="查询"></a></li>
+    <li style="float: right"><a><input id="countryName" type="text" placeholder="请输入查询的国家名" ></a></li>
+</ul>
+
+<!--<textarea name="test" id="outvalue" value="hhhh">-->
+
+<div id="main"></div>
+<script src="../js/echarts3.8.5.min.js"></script>
+<script src="../js/bmap3.8.5.min.js"></script>
+<script src="../js/jquery.js"></script>
+<script src="../js/turf.min.js"></script>
+<script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=7hevj7Ex3P3gYyFtEcrvjVp8WAaQ9QEz"></script>
+<script src="../js/bmap_gis_earthquake.js"></script>
+
+<script>
+
+    document.getElementById("countrySearch").onclick = function () {
+        if(window.localStorage){
+            localStorage.value = document.getElementById("countryName").value;
+            location.href="search_result.html";
+        }else {
+            alert("不支持！");
+        }
+    };
+
+    // 用经纬度设置地图中心点
+    function theLocation(){
+        if(document.getElementById("longitude").value != "" && document.getElementById("latitude").value != ""){
+            map.clearOverlays();
+            var new_point = new BMap.Point(document.getElementById("longitude").value,document.getElementById("latitude").value);
+            var marker = new BMap.Marker(new_point);  // 创建标注
+            map.addOverlay(marker);              // 将标注添加到地图中
+        }
+    }
+
+//    function measure() {
+//        var myDis = new myChart2.getModel().getComponent('bmap').getBMap().DistanceTool(map);
+//        map.addEventListener("load",function(){
+//            myDis.open();  //开启鼠标测距
+//            //myDis.close();  //关闭鼠标测距
+//        });
+//    }
+//    function getName() {
+//        window.open('search_result.html');
+////        u = [];
+////        $('#countrySearch').click(function() {
+////            var un = document.getElementById("countryName");
+//////        var len = un.length;
+//////        alert(len)
+//////        for(i = 0; i < len; i++) {
+//////            var ne = un[i].value;
+//////            u.push(ne);
+//////        }
+//////        document.getElementById("n").value = u;
+//////        var ss = $('#n').val();
+//////        alert(ss);
+////            window.open('search_result.html')　//B.html 前面的是不重要,关键的是这句　
+////        })
+//    }
+
+
+
+//    var str = new Array();
+//    var timev = new Array();
+//    function getName() {
+//        var cname = document.getElementById("countryName").value;
+//        a(cname)
+//    }
+//    function a(cname) {
+//        var _url = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson";
+//        $.ajax({
+//            url:_url,
+//            type:'GET',
+//            processData:false,
+//            contentType:false
+//        }).done(function (data) {
+//            for(var n=0;n<data.features.length; n++){
+//                str[n] = data.features[n].properties.title;
+//                if(str[n].match(cname)!=null){
+//                    timev[n] = new Date(data.features[n].properties.time).toLocaleString();
+//                    document.write("名称"+":"+data.features[n].properties.title+"\n"+
+//                        "地点"+":"+data.features[n].geometry.coordinates.slice(0, 2)+
+//                        "时间"+":"+ timev[n]+
+//                        "震级"+":"+data.features[n].properties.mag+"<br>");
+//                }
+//            }
+//        }).fail(function (res) {
+//            console.log("fail,"+res);
+//        });
+//    }
+
+</script>
+<!--<textarea cols="30" rows="10">-->
+<!--</textarea>-->
+
+</body>
+</html>

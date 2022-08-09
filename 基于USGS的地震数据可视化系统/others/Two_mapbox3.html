@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8' />
+    <title>Data visualization index--Swipe between maps</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.0.0/mapbox-gl.js'></script>
+    <link href='css/VGEs.css' rel='stylesheet' />
+    <script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-compare/v0.1.0/mapbox-gl-compare.js'></script>
+    <script type="text/javascript" src="js/jquery.js"></script>
+    <link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-compare/v0.1.0/mapbox-gl-compare.css' type='text/css' />
+
+    <style>
+        body { margin:0; padding:0; overflow: hidden;}
+        #map { position:absolute; top:0; bottom:0; width:100%; }
+        .solid{border-left: 1px solid #ccc;padding-left: 40px}
+        .message{display: inline-block;margin-left: 50px}
+        .weather img{margin-top: -100px}
+        .weathertool{
+            position: relative;
+            float: right;
+            z-index:999999;}
+        .modal-content{float: right;}
+        #menu {
+            position: absolute;
+            background: #fff;
+            padding: 10px;
+            font-family: 'Open Sans', sans-serif;
+        }
+        body * {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        .map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+        .tools-container{
+            width: auto;
+            z-index: 999999;
+            position:absolute;
+            right:300px;bottom:0;
+            /*position: relative;*/
+        }
+        .legend {
+            background-color: #fff;
+            border-radius: 3px;
+            bottom: 30px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.10);
+            font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+            padding: 10px;
+            position: absolute;
+            right: 10px;
+            z-index: 1;
+        }
+
+        .legend h4 {
+            margin: 0 0 10px;
+        }
+
+        .legend div span {
+            border-radius: 50%;
+            display: inline-block;
+            height: 10px;
+            margin-right: 5px;
+            width: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="weathertool">
+    <div class="panel-heading">
+        <span id="city"></span>
+        <button type="button" class="btn btn-default" data-toggle="modal" data-target=".bs-example-modal-sm">更换城市</button>
+    </div>
+    <div class="panel-body">
+        <div class="today col-md-4">
+            <img src="./images/sun.png" alt="">
+            <div class="message">
+                <p>今天</p>
+                <p>晴天</p>
+                <p>最高</p>
+                <p>最低</p>
+            </div>
+        </div>
+    </div>
+    <span id="tips"></span>
+    <div class="modal fade bs-example-modal-sm" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel">
+        <div class="modal-dialog modal-sm" role="document">
+            <div class="modal-content">
+                <input type="text" class="form-control" id="newCity" placeholder="请输入城市名...">
+                <button class="btn btn-default" onclick="changeCity()">确认</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id='before' class='map'></div>
+<div id='after' class='map'></div>
+<!--<div id='menu'>-->
+<!--<input id='streets-v11' type='radio' name='rtoggle' value='streets' checked='checked'>-->
+<!--<label for='streets'>普通</label>-->
+<!--<input id='light-v10' type='radio' name='rtoggle' value='light'>-->
+<!--<label for='light'>明亮</label>-->
+<!--<input id='dark-v10' type='radio' name='rtoggle' value='dark'>-->
+<!--<label for='dark'>黑夜</label>-->
+<!--<input id='outdoors-v11' type='radio' name='rtoggle' value='outdoors'>-->
+<!--<label for='outdoors'>户外</label>-->
+<!--<input id='satellite-v9' type='radio' name='rtoggle' value='satellite'>-->
+<!--<label for='satellite'>卫星</label>-->
+<!--</div>-->
+
+<script>
+    mapboxgl.accessToken = 'pk.eyJ1Ijoib25lZ2lzZXIiLCJhIjoiY2plZHptcnVuMW5tazMzcWVteHM2aGFsZiJ9.ERWP7zZ-N6fmNl3cRocJ1g';
+    var MapUrl;
+    var SpriteUrl;
+    var GlyphsUrl;
+    MapUrl = "http://47.102.141.240:8080/geoserver/gwc/service/tms/1.0.0/gis_competition:YLSL@EPSG:900913@pbf/{z}/{x}/{y}.pbf";
+    SpriteUrl="mapbox://sprites/mapbox/streets-v8";
+    GlyphsUrl = "http://47.102.141.240:8080/VGEs_Web1.0/fonts/{fontstack}/{range}.pbf";
+
+    var beforeMap = new mapboxgl.Map({
+        container: 'before',
+        style: 'mapbox://styles/mapbox/light-v10',
+        center: [100, 20],
+        zoom: 1
+    });
+
+    beforeMap.on('load', function() {
+        // Add a geojson point source.
+        // Heatmap layers also work with a vector tile source.
+        beforeMap.addSource('earthquakes', {
+            "type": "geojson",
+            "data": "http://47.102.141.240:8080/data/chinaearthquake.json"
+        });
+
+        beforeMap.addLayer({
+            "id": "earthquakes-heat",
+            "type": "heatmap",
+            "source": "earthquakes",
+            "maxzoom": 9,
+            "paint": {
+                // Increase the heatmap weight based on frequency and property magnitude
+                "heatmap-weight": [
+                    "interpolate",
+                    ["linear"],
+                    ["get", "mag"],
+                    0, 0,
+                    6, 1
+                ],
+                // Increase the heatmap color weight weight by zoom level
+                // heatmap-intensity is a multiplier on top of heatmap-weight
+                "heatmap-intensity": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    0, 1,
+                    9, 3
+                ],
+                // Color ramp for heatmap.  Domain is 0 (low) to 1 (high).
+                // Begin color ramp at 0-stop with a 0-transparancy color
+                // to create a blur-like effect.
+                "heatmap-color": [
+                    "interpolate",
+                    ["linear"],
+                    ["heatmap-density"],
+                    0, "rgba(33,102,172,0)",
+                    0.2, "#b3b8f0",
+                    0.4, "#D1E5F0",
+                    0.6, "#FDDBC7",
+                    0.8, "#efdaa8",
+                    1, "#e32b24"
+                ],
+                // Adjust the heatmap radius by zoom level
+                "heatmap-radius": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    0, 2,
+                    9, 20
+                ],
+                // Transition from heatmap to circle layer by zoom level
+                "heatmap-opacity": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    7, 1,
+                    9, 0
+                ],
+            }
+        }, 'waterway-label');
+
+        beforeMap.addLayer({
+            "id": "earthquakes-point",
+            "type": "circle",
+            "source": "earthquakes",
+            "minzoom": 7,
+            "paint": {
+                // Size circle radius by earthquake magnitude and zoom level
+                "circle-radius": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    7, [
+                        "interpolate",
+                        ["linear"],
+                        ["get", "mag"],
+                        1, 1,
+                        6, 4
+                    ],
+                    16, [
+                        "interpolate",
+                        ["linear"],
+                        ["get", "mag"],
+                        1, 5,
+                        6, 50
+                    ]
+                ],
+                // Color circle by earthquake magnitude
+                "circle-color": [
+                    "interpolate",
+                    ["linear"],
+                    ["get", "mag"],
+                    1, "#2165AC",
+                    2, "#67A9CF",
+                    3, "#D1E5F0",
+                    4, "#FDDBC7",
+                    5, "#EF8A62",
+                    6, "#e31f1d"
+                ],
+                "circle-stroke-color": "white",
+                "circle-stroke-width": 1,
+                // Transition from heatmap to circle layer by zoom level
+                "circle-opacity": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    7, 0,
+                    8, 1
+                ]
+            }
+        }, 'waterway-label');
+    });
+
+    var afterMap = new mapboxgl.Map({
+        container: 'after',
+        style: 'mapbox://styles/mapbox/dark-v10',
+        center: [100, 20],
+        zoom: 1
+    });
+
+    afterMap.on('load', function() {
+        // Add a geojson point source.
+        // Heatmap layers also work with a vector tile source.
+        afterMap.addSource('earthquakes', {
+            "type": "geojson",
+            "data": "http://47.102.141.240:8080/data/chinaearth_more6.json"
+        });
+
+        afterMap.addLayer({
+            "id": "earthquakes-heat",
+            "type": "heatmap",
+            "source": "earthquakes",
+            "maxzoom": 9,
+            "paint": {
+                // Increase the heatmap weight based on frequency and property magnitude
+                "heatmap-weight": [
+                    "interpolate",
+                    ["linear"],
+                    ["get", "mag"],
+                    0, 0,
+                    6, 1
+                ],
+                // Increase the heatmap color weight weight by zoom level
+                // heatmap-intensity is a multiplier on top of heatmap-weight
+                "heatmap-intensity": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    0, 1,
+                    9, 3
+                ],
+                // Color ramp for heatmap.  Domain is 0 (low) to 1 (high).
+                // Begin color ramp at 0-stop with a 0-transparancy color
+                // to create a blur-like effect.
+                "heatmap-color": [
+                    "interpolate",
+                    ["linear"],
+                    ["heatmap-density"],
+                    0, "rgba(33,102,172,0)",
+                    0.2, "#b3b8f0",
+                    0.4, "#D1E5F0",
+                    0.6, "#FDDBC7",
+                    0.8, "#efdaa8",
+                    1, "#e32b24"
+                ],
+                // Adjust the heatmap radius by zoom level
+                "heatmap-radius": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    0, 2,
+                    9, 20
+                ],
+                // Transition from heatmap to circle layer by zoom level
+                "heatmap-opacity": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    7, 1,
+                    9, 0
+                ],
+            }
+        }, 'waterway-label');
+
+        afterMap.addLayer({
+            "id": "earthquakes-point",
+            "type": "circle",
+            "source": "earthquakes",
+            "minzoom": 7,
+            "paint": {
+                // Size circle radius by earthquake magnitude and zoom level
+                "circle-radius": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    7, [
+                        "interpolate",
+                        ["linear"],
+                        ["get", "mag"],
+                        1, 1,
+                        6, 4
+                    ],
+                    16, [
+                        "interpolate",
+                        ["linear"],
+                        ["get", "mag"],
+                        1, 5,
+                        6, 50
+                    ]
+                ],
+                // Color circle by earthquake magnitude
+                "circle-color": [
+                    "interpolate",
+                    ["linear"],
+                    ["get", "mag"],
+                    1, "#2165AC",
+                    2, "#67A9CF",
+                    3, "#D1E5F0",
+                    4, "#FDDBC7",
+                    5, "#EF8A62",
+                    6, "#e31f1d"
+                ],
+                "circle-stroke-color": "white",
+                "circle-stroke-width": 1,
+                // Transition from heatmap to circle layer by zoom level
+                "circle-opacity": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    7, 0,
+                    8, 1
+                ]
+            }
+        }, 'waterway-label');
+    });
+
+    var map = new mapboxgl.Compare(beforeMap, afterMap, {
+        // Set this to enable comparing two maps by mouse movement:
+        // mousemove: true
+    });
+
+    //    var layerList = document.getElementById('menu');
+    //    var inputs = layerList.getElementsByTagName('input');
+    //
+    //    function switchLayer(layer) {
+    //        var layerId = layer.target.id;
+    //        beforeMap.setStyle('mapbox://styles/mapbox/' + layerId);
+    //    }
+    //
+    //    for (var i = 0; i < inputs.length; i++) {
+    //        inputs[i].onclick = switchLayer;
+    //    }
+
+    //    map.addControl(new mapboxgl.FullscreenControl());
+
+    window.onload = function () {
+        getWeather('滁州');
+    };
+    //更换城市
+    function changeCity() {
+
+        var newCity = $("#newCity");
+        //未输入城市名点击确认提示
+        if(newCity.val()==''){
+            alert('请输入城市名!');
+            newCity.focus();
+            return false;
+        }
+        getWeather(newCity.val());
+        $(".modal").modal('hide');//模态框关闭
+    }
+    //ajax请求天气数据
+    function getWeather(city) {
+        $.ajax({
+            type: "get",
+            dataType: "json",
+            url: 'http://wthrcdn.etouch.cn/weather_mini?city='+city,
+            success: function (data) {
+                $("#city").html("当前城市:"+city)//显示当前城市
+                var tips = data.data.ganmao;
+                var today = data.data.forecast[0];
+//                var tomorrow = data.data.forecast[1];
+//                var afterTomorrow = data.data.forecast[2];
+                //填充Tips天气提示
+//                $("#tips").html("小贴士:" + tips);
+                //填充天气数据
+                setWeather(".today", today);
+//                setWeather(".tomorrow", tomorrow);
+//                setWeather(".afterTomorrow", afterTomorrow);
+                //设置天气img的src
+                matchType(today.type, ".today");
+//                matchType(tomorrow.type, ".tomorrow");
+//                matchType(afterTomorrow.type, ".afterTomorrow");
+            }
+        });
+    }
+    //提取json数据并填充到标签中
+    function setWeather(date,data) {
+        $(date).find('p').eq(0).html(data.date);
+        $(date).find('p').eq(1).html(data.type);
+        $(date).find('p').eq(2).html(data.high);
+        $(date).find('p').eq(3).html(data.low);
+    }
+    //正则匹配天气类型，修改天气img的src
+    function matchType(type,date) {
+        var rain = /\u96e8/; //雨
+        var sun = /\u6674/;  //晴
+        var cloud = /\u4e91/;//云
+        //var overcast = /\u9634/; //阴
+
+        //判断api返回的天气类型包含的关键字是 雨 or 晴 or 云 or 阴
+        var imgName =  rain.test(type)?"rain":(sun.test(type)?"sun":(cloud.test(type)?"cloud":"overcast"));
+        //根据天气类型关键字来匹配对应的天气图片
+        $(date).find('img').attr('src','images/'+imgName+'.png');
+    }
+
+</script>
+
+</body>
+</html>

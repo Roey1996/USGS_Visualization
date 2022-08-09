@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Data visualization_RearchResult</title>
+    <script src="js/jquery.js"></script>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+</head>
+<body>
+<script>
+
+    var str = new Array();
+    var timev = new Array();
+    !function () {
+        var cname=localStorage.value;
+        a(cname)
+    }();
+    function a(cname) {
+        console.log(cname);
+        var _url = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson";
+        $.ajax({
+            url:_url,
+            type:'GET',
+            processData:false,
+            contentType:false
+        }).done(function (data) {
+            for(var n=0;n<data.features.length; n++){
+                str[n] = data.features[n].properties.title;
+                if(str[n].match(cname)!=null){
+                    timev[n] = new Date(data.features[n].properties.time).toLocaleString();
+                    document.write("名称"+":"+data.features[n].properties.title+"   "+
+                        "地点"+":"+data.features[n].geometry.coordinates.slice(0, 2)+"   "+
+                        "时间"+":"+ timev[n]+"   "+
+                        "震级"+":"+data.features[n].properties.mag+"<br>");
+                }
+            }
+        }).fail(function (res) {
+            console.log("fail,"+res);
+        });
+    }
+</script>
+
+</body>
+</html>

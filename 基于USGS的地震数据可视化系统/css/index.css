@@ -1,0 +1,100 @@
+.main{
+    z-index:9999;
+    position: relative;
+    /*width: 350px;*/
+    /*height: 400px;*/
+    /*opacity:0.3;*/
+    /*background-color: pink;*/
+    padding-left: 30px;
+    float: left;
+    /*position: relative;*/
+}
+.fieldType,.field{
+    width: 100%;
+    height: 50px;
+    line-height: 50px;
+}
+.fieldType select{
+    margin-left: 40px;
+    width: 100px;
+}
+.field select{
+    margin-left: 72px;
+    width: 100px;
+}
+.tier{
+    width: 100%;
+    height: 80px;
+    padding-top: 20px;
+}
+.tier input{
+    margin-left: 45px;
+    width: 100px;
+}
+.pointProperty{
+    display: block;
+}
+.pointProperty input,.lineProperty input{
+    margin-left: 75px;
+    width: 100px;
+}
+.lineProperty{
+    display: none;
+}
+.polygonProperty{
+    display: none;
+}
+.polygonProperty input{
+    margin-left: 60px;
+    width: 100px;
+}
+.butt{
+    margin-left: 50px;
+    width: 100px;
+    height: 50px;
+}
+#map {
+    position:absolute;
+    top:0;
+    bottom:0;
+    width:100%;
+}
+
+#pd_dIcon
+{
+    position: absolute;
+    bottom: 40px;
+    right: -140px;
+}
+#pd_dSmallIcon
+{
+    background: #f4f7fc;
+    width: 200px;
+    height: 200px;
+    padding-left: 10px;
+    overflow-y:scroll;
+    border-radius: 5px;
+    box-shadow: 0 0 10px 2px rgba(31,51,73,.25)!important;
+}
+table
+{
+    border-collapse: collapse;
+}
+table td
+{
+    border-top: 0;
+    border-right: 2px solid gray;
+    border-bottom: 2px solid gray;
+    border-left: 0;
+}
+/* css3样式，获取表格的最后一行 */
+table tr:last-child td
+{
+    border-bottom: 0;
+}
+/* css3样式，获取表格的最后一列 */
+table tr td:last-child
+{
+    border-right: 0;
+}
+

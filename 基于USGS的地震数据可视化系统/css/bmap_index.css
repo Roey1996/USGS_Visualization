@@ -1,0 +1,13 @@
+body {
+    margin: 0;
+}
+#main {
+    height: 100%;
+}
+.BMap_cpyCtrl {
+    display: none;
+}
+
+.anchorBL {
+    display: none;
+}
